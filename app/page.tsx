@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -16,8 +16,13 @@ const GamePreview = dynamic(() => import("@/components/game-preview"), { ssr: fa
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [gameCode, setGameCode] = useState("");
+  const [editedCode, setEditedCode] = useState(""); // Track real-time changes
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setEditedCode(gameCode); // Sync editor with generated game
+  }, [gameCode]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -33,6 +38,7 @@ export default function Home() {
     try {
       const code = await generateGameCode(prompt);
       setGameCode(code);
+      setEditedCode(code); // Update editor and preview
       toast({
         title: "Game Generated!",
         description: "Your game has been created successfully.",
@@ -51,7 +57,7 @@ export default function Home() {
 
   const handleDownload = () => {
     const element = document.createElement("a");
-    const file = new Blob([gameCode], { type: "text/javascript" });
+    const file = new Blob([editedCode], { type: "text/javascript" });
     element.href = URL.createObjectURL(file);
     element.download = "game.js";
     document.body.appendChild(element);
@@ -63,7 +69,7 @@ export default function Home() {
     <main className="min-h-screen bg-background p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight">AI Game Generator</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Code To Play</h1>
           <p className="text-muted-foreground">
             Transform your ideas into playable 2D games using AI
           </p>
@@ -92,19 +98,19 @@ export default function Home() {
 
           <TabsContent value="preview" className="space-y-4">
             <div className="aspect-video rounded-lg overflow-hidden border bg-card">
-              <GamePreview code={gameCode} />
+              <GamePreview code={editedCode} />
             </div>
           </TabsContent>
 
           <TabsContent value="code" className="space-y-4">
             <div className="h-[600px] rounded-lg overflow-hidden border">
-              <CodeEditor value={gameCode} onChange={setGameCode} />
+              <CodeEditor value={editedCode} onChange={setEditedCode} />
             </div>
           </TabsContent>
         </Tabs>
 
         <div className="flex justify-end">
-          <Button onClick={handleDownload} disabled={!gameCode} variant="outline">
+          <Button onClick={handleDownload} disabled={!editedCode} variant="outline">
             Download Game
           </Button>
         </div>
